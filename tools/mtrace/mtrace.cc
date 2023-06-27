@@ -3,15 +3,9 @@
 #include <unistd.h>
 
 #include <algorithm>
-#include <iostream>
 #include <vector>
 
 #include "common.h"
-
-template <typename T> void die(T &&msg) {
-  std::cerr << msg << ", errno: " << errno << std::endl;
-  exit(-1);
-}
 
 void doChild(int argc, char *argv[]) {
   std::vector<char *> args(argc, NULL);
@@ -38,7 +32,7 @@ void doParent(pid_t pid) {
 
     struct ptrace_syscall_info info;
     ptrace(PTRACE_GET_SYSCALL_INFO, pid, sizeof(info), &info);
-    syscall_handler(info);
+    do_syscall(pid, info);
 
     ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
   }
