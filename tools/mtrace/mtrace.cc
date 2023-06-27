@@ -2,17 +2,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <algorithm>
-#include <vector>
-
 #include "common.h"
 
 void doChild(int argc, char *argv[]) {
-  std::vector<char *> args(argc, NULL);
-  std::copy_n(argv + 1, argc - 1, args.begin());
-
   ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-  execve(argv[0], args.data(), NULL);
+  execve(argv[0], argv, NULL);
   die("child execve failed");
 }
 
