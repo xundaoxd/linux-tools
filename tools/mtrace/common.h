@@ -1,9 +1,10 @@
 #pragma once
-#include <linux/perf_event.h>
 #include <linux/types.h>
 #include <sys/ptrace.h>
 
 #include <iostream>
+
+#include "perf_handler.h"
 
 template <typename T> void die(T &&msg) {
   std::cerr << msg << ", errno: " << errno << std::endl;
@@ -352,33 +353,11 @@ static const char *syscall_tbl[] = {"read",
                                     "kcmp",
                                     "finit_module"};
 
-static void peek_data(void *dst, int size, pid_t pid, __u64 addr) {
-  for (int i = 0; i < size; i++) {
+static void peek_data(void *dst, long size, pid_t pid, __u64 addr) {
+  for (long i = 0; i < size / sizeof(long); i++) {
     ((long *)(dst))[i] =
         ptrace(PTRACE_PEEKDATA, pid, addr + i * sizeof(long), NULL);
   }
-}
-
-static void perf_event_open_handler(pid_t pid,
-                                    const struct ptrace_syscall_info &info) {
-  std::cout << "perf_event_open\n";
-  struct perf_event_attr attr;
-  peek_data(&attr, sizeof(attr), pid, info.entry.args[0]);
-
-  std::cout << "    type: 0x" << std::hex << attr.type << std::endl;
-  std::cout << "    size: 0x" << std::hex << attr.size << std::endl;
-  std::cout << "    config: 0x" << std::hex << attr.config << std::endl;
-  std::cout << "    sample_period: 0x" << std::hex << attr.sample_period
-            << std::endl;
-  std::cout << "    sample_freq: 0x" << std::hex << attr.sample_freq
-            << std::endl;
-  std::cout << "    sample_type: 0x" << std::hex << attr.sample_type
-            << std::endl;
-  std::cout << "    read_format: 0x" << std::hex << attr.read_format
-            << std::endl;
-
-  std::cout << "    mmap: 0x" << std::hex << attr.mmap << std::endl;
-  std::cout << "    freq: 0x" << std::hex << attr.freq << std::endl;
 }
 
 inline void do_syscall(pid_t pid, const struct ptrace_syscall_info &info) {
