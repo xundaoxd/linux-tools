@@ -9,7 +9,7 @@
 #include "common.h"
 
 template <typename T> void die(T &&msg) {
-  std::cout << msg << ", errno: " << errno << std::endl;
+  std::cerr << msg << ", errno: " << errno << std::endl;
   exit(-1);
 }
 
@@ -38,14 +38,7 @@ void doParent(pid_t pid) {
 
     struct ptrace_syscall_info info;
     ptrace(PTRACE_GET_SYSCALL_INFO, pid, sizeof(info), &info);
-    if (info.op == PTRACE_SYSCALL_INFO_ENTRY) {
-      if (info.entry.nr < sizeof(syscall_tbl) / sizeof(syscall_tbl[0])) {
-        std::cout << info.entry.nr << ":" << syscall_tbl[info.entry.nr]
-                  << std::endl;
-      } else {
-        std::cout << "undefined syscall, nr: " << info.entry.nr << std::endl;
-      }
-    }
+    syscall_handler(info);
 
     ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
   }

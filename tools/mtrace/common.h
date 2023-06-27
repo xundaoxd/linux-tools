@@ -1,5 +1,8 @@
 #pragma once
 #include <linux/types.h>
+#include <sys/ptrace.h>
+
+#include <iostream>
 
 struct ptrace_syscall_info {
   __u8 op;                   /* Type of system call stop */
@@ -342,3 +345,14 @@ static const char *syscall_tbl[] = {"read",
                                     "process_vm_writev",
                                     "kcmp",
                                     "finit_module"};
+
+inline void syscall_handler(const struct ptrace_syscall_info &info) {
+  if (info.op == PTRACE_SYSCALL_INFO_ENTRY) {
+    if (info.entry.nr < sizeof(syscall_tbl) / sizeof(syscall_tbl[0])) {
+      std::cout << info.entry.nr << ":" << syscall_tbl[info.entry.nr]
+                << std::endl;
+    } else {
+      std::cerr << "invalid syscall, nr: " << info.entry.nr << std::endl;
+    }
+  }
+}
