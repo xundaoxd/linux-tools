@@ -1,10 +1,12 @@
-#include <algorithm>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
+
+#include "common.h"
 
 template <typename T> void die(T &&msg) {
   std::cout << msg << ", errno: " << errno << std::endl;
@@ -26,13 +28,25 @@ void doParent(pid_t pid) {
   if (WIFEXITED(status)) {
     return;
   }
+  ptrace(PTRACE_SETOPTIONS, pid, NULL, PTRACE_O_TRACESYSGOOD);
   ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
   while (1) {
     wait(&status);
     if (WIFEXITED(status)) {
       break;
     }
-    std::cout << "new syscall" << std::endl;
+
+    struct ptrace_syscall_info info;
+    ptrace(PTRACE_GET_SYSCALL_INFO, pid, sizeof(info), &info);
+    if (info.op == PTRACE_SYSCALL_INFO_ENTRY) {
+      if (info.entry.nr < sizeof(syscall_tbl) / sizeof(syscall_tbl[0])) {
+        std::cout << info.entry.nr << ":" << syscall_tbl[info.entry.nr]
+                  << std::endl;
+      } else {
+        std::cout << "undefined syscall, nr: " << info.entry.nr << std::endl;
+      }
+    }
+
     ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
   }
 }
