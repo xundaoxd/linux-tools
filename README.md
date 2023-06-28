@@ -1,5 +1,5 @@
 # linux-tools
 
+- [x] mtrace
 - [/] mperf
-- [/] mtrace
 
