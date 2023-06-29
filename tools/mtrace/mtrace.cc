@@ -17,8 +17,8 @@ void doParent(pid_t pid) {
     return;
   }
   ptrace(PTRACE_SETOPTIONS, pid, NULL, PTRACE_O_TRACESYSGOOD);
-  ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
   while (1) {
+    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
     wait(&status);
     if (WIFEXITED(status)) {
       break;
@@ -26,9 +26,9 @@ void doParent(pid_t pid) {
 
     struct ptrace_syscall_info info;
     ptrace(PTRACE_GET_SYSCALL_INFO, pid, sizeof(info), &info);
-    do_syscall(pid, info);
-
-    ptrace(PTRACE_SYSCALL, pid, NULL, NULL);
+    if (info.op) {
+      do_syscall(pid, info);
+    }
   }
 }
 
