@@ -1,0 +1,47 @@
+#!/bin/bash
+
+base_dir=/sys/kernel/tracing
+
+function die() {
+    echo "$@"
+    exit 1
+}
+
+function sig_int() {
+    echo 0 > $base_dir/tracing_on
+    echo nop > $base_dir/current_tracer
+    [[ -n $cpumask ]] && echo > $base_dir/tracing_cpumask
+    [[ -n $pid ]] && echo > $base_dir/set_ftrace_pid
+    [[ -n $fname ]] && echo > $base_dir/set_ftrace_filter
+}
+
+cpumask=""
+pid=""
+fname=""
+
+while getopts 'p:f:c:' OPTION; do
+    case "$OPTION" in
+        p)
+            pid="$OPTARG"
+            ;;
+        f)
+            fname="$OPTARG"
+            ;;
+        c)
+            cpumask="$OPTARG"
+            ;;
+        *)
+            die "undefined arg"
+        ;;
+    esac
+done
+
+[[ -n $cpumask ]] && echo "$cpumask" > $base_dir/tracing_cpumask
+[[ -n $pid ]] && echo "$pid" > $base_dir/set_ftrace_pid
+[[ -n $fname ]] && echo "$fname" > $base_dir/set_ftrace_filter
+
+echo function > $base_dir/current_tracer
+echo 1 > $base_dir/tracing_on
+trap sig_int SIGINT
+cat $base_dir/trace_pipe
+

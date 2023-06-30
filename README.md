@@ -2,4 +2,5 @@
 
 - [x] mtrace
 - [/] mperf
+- [/] ftracer
 
