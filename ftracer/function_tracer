@@ -13,13 +13,15 @@ function sig_int() {
     [[ -n $cpumask ]] && echo > $base_dir/tracing_cpumask
     [[ -n $pid ]] && echo > $base_dir/set_ftrace_pid
     [[ -n $fname ]] && echo > $base_dir/set_ftrace_filter
+    [[ -n $trace_stack ]] && echo "$trace_stack" > $base_dir/options/func_stack_trace
 }
 
 cpumask=""
 pid=""
 fname=""
+trace_stack=""
 
-while getopts 'p:f:c:' OPTION; do
+while getopts 'sp:f:c:' OPTION; do
     case "$OPTION" in
         p)
             pid="$OPTARG"
@@ -29,6 +31,9 @@ while getopts 'p:f:c:' OPTION; do
             ;;
         c)
             cpumask="$OPTARG"
+            ;;
+        s)
+            trace_stack="y"
             ;;
         *)
             die "undefined arg"
@@ -40,6 +45,7 @@ shift $(( $OPTIND - 1 ))
 [[ -n $cpumask ]] && echo "$cpumask" > $base_dir/tracing_cpumask
 [[ -n $pid ]] && echo "$pid" > $base_dir/set_ftrace_pid
 [[ -n $fname ]] && echo "$fname" > $base_dir/set_ftrace_filter
+[[ -n $trace_stack ]] && trace_stack="$(cat $base_dir/options/func_stack_trace)" && echo 1 > $base_dir/options/func_stack_trace
 
 echo function > $base_dir/current_tracer
 echo 1 > $base_dir/tracing_on
