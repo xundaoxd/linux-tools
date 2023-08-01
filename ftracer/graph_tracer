@@ -1,49 +1,17 @@
 #!/bin/bash
+set -e
 
-base_dir=/sys/kernel/tracing
+self_path=$(realpath "${BASH_SOURCE[0]}")
+proj_prefix=$(dirname "$(dirname "$self_path")")
+.   "$proj_prefix/utils/common.sh"
 
-function die() {
-    echo "$@"
-    exit 1
-}
+base_dir="/sys/kernel/tracing"
 
-function sig_int() {
-    echo 0 > $base_dir/tracing_on
-    echo nop > $base_dir/current_tracer
-    [[ -n $cpumask ]] && echo > $base_dir/tracing_cpumask
-    [[ -n $pid ]] && echo > $base_dir/set_ftrace_pid
-    [[ -n $fname ]] && echo > $base_dir/set_graph_function
-}
+run_at_exit "write_file $base_dir/current_tracer $(cat $base_dir/current_tracer)"
+write_file $base_dir/current_tracer function_graph
 
-cpumask=""
-pid=""
-fname=""
+run_at_exit "write_file $base_dir/tracing_on $(cat $base_dir/tracing_on)"
+write_file $base_dir/tracing_on 1
 
-while getopts 'p:f:c:' OPTION; do
-    case "$OPTION" in
-        p)
-            pid="$OPTARG"
-            ;;
-        f)
-            fname="$OPTARG"
-            ;;
-        c)
-            cpumask="$OPTARG"
-            ;;
-        *)
-            die "undefined arg"
-        ;;
-    esac
-done
-shift $(( $OPTIND - 1 ))
-
-[[ -n $cpumask ]] && echo "$cpumask" > $base_dir/tracing_cpumask
-[[ -n $pid ]] && echo "$pid" > $base_dir/set_ftrace_pid
-[[ -n $fname ]] && echo "$fname" > $base_dir/set_graph_function
-
-echo function_graph > $base_dir/current_tracer
-echo 1 > $base_dir/tracing_on
-trap sig_int SIGINT
 cat $base_dir/trace_pipe
-
 

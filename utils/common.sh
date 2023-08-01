@@ -1,0 +1,22 @@
+die() {
+    echo "$@"
+    exit 1
+}
+
+write_file() {
+    fname="$1"
+    shift
+    echo "$@" > "$fname"
+}
+
+post_hook=()
+run_at_exit() {
+    post_hook+=("$@")
+}
+on_exit() {
+    for((i = ${#post_hook[@]} - 1;i >= 0;i--)); do
+        ${post_hook[i]}
+    done
+}
+trap on_exit EXIT
+

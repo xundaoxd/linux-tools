@@ -1,54 +1,38 @@
 #!/bin/bash
+set -e
 
-base_dir=/sys/kernel/tracing
+self_path=$(realpath "${BASH_SOURCE[0]}")
+proj_prefix=$(dirname "$(dirname "$self_path")")
+.   "$proj_prefix/utils/common.sh"
 
-function die() {
-    echo "$@"
-    exit 1
-}
+base_dir="/sys/kernel/tracing"
 
-function sig_int() {
-    echo 0 > $base_dir/tracing_on
-    echo nop > $base_dir/current_tracer
-    [[ -n $cpumask ]] && echo > $base_dir/tracing_cpumask
-    [[ -n $pid ]] && echo > $base_dir/set_ftrace_pid
-    [[ -n $fname ]] && echo > $base_dir/set_ftrace_filter
-    [[ -n $trace_stack ]] && echo "$trace_stack" > $base_dir/options/func_stack_trace
-}
-
-cpumask=""
-pid=""
-fname=""
-trace_stack=""
-
-while getopts 'sp:f:c:' OPTION; do
-    case "$OPTION" in
-        p)
-            pid="$OPTARG"
-            ;;
-        f)
-            fname="$OPTARG"
-            ;;
-        c)
-            cpumask="$OPTARG"
-            ;;
-        s)
-            trace_stack="y"
-            ;;
-        *)
-            die "undefined arg"
-        ;;
+opt_pid=
+opt_fork=
+while getopts 'fp:' name; do
+    case $name in
+        p)  opt_pid="$OPTARG";;
+        f)  opt_fork=1;;
+        ?)  die "undefined opt: $name";;
     esac
 done
-shift $(( $OPTIND - 1 ))
+shift $((OPTIND - 1))
 
-[[ -n $cpumask ]] && echo "$cpumask" > $base_dir/tracing_cpumask
-[[ -n $pid ]] && echo "$pid" > $base_dir/set_ftrace_pid
-[[ -n $fname ]] && echo "$fname" > $base_dir/set_ftrace_filter
-[[ -n $trace_stack ]] && trace_stack="$(cat $base_dir/options/func_stack_trace)" && echo 1 > $base_dir/options/func_stack_trace
+run_at_exit "write_file $base_dir/current_tracer $(cat $base_dir/current_tracer)"
+write_file $base_dir/current_tracer function
 
-echo function > $base_dir/current_tracer
-echo 1 > $base_dir/tracing_on
-trap sig_int SIGINT
+if [[ -n "$opt_pid" ]]; then
+    run_at_exit "write_file $base_dir/set_ftrace_pid"
+    write_file $base_dir/set_ftrace_pid "$opt_pid"
+fi
+
+if [[ -n "$opt_fork" ]]; then
+    run_at_exit "write_file $base_dir/trace_options $(cat $base_dir/trace_options)"
+    write_file $base_dir/trace_options "function-fork"
+fi
+
+run_at_exit "write_file $base_dir/tracing_on $(cat $base_dir/tracing_on)"
+write_file $base_dir/tracing_on 1
+
 cat $base_dir/trace_pipe
 
