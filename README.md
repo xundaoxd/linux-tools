@@ -3,6 +3,6 @@
 - [x] mtrace
 - [ ] mperf
 - [ ] ftracer
-    - [ ] function tracer
-    - [ ] graph tracer
+    - [x] function tracer
+    - [x] graph tracer
 
