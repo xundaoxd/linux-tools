@@ -6,7 +6,9 @@ die() {
 write_file() {
     fname="$1"
     shift
-    echo "$@" > "$fname"
+    for t in "$@"; do
+        echo "$t" > "$fname"
+    done
 }
 
 post_hook=()

@@ -8,15 +8,21 @@ proj_prefix=$(dirname "$(dirname "$self_path")")
 base_dir="/sys/kernel/tracing"
 
 opt_pid=
-opt_fork=
-while getopts 'fp:' name; do
-    case $name in
-        p)  opt_pid="$OPTARG";;
-        f)  opt_fork=1;;
-        ?)  die "undefined opt: $name";;
+opt_options=
+while (( $# )); do
+    case $1 in
+        -p)
+            opt_pid="$2"
+            shift
+            ;;
+        -o)
+            opt_options+=" $2"
+            shift
+            ;;
+        *)  break;;
     esac
+    shift
 done
-shift $((OPTIND - 1))
 
 run_at_exit "write_file $base_dir/current_tracer $(cat $base_dir/current_tracer)"
 write_file $base_dir/current_tracer function
@@ -26,9 +32,9 @@ if [[ -n "$opt_pid" ]]; then
     write_file $base_dir/set_ftrace_pid "$opt_pid"
 fi
 
-if [[ -n "$opt_fork" ]]; then
+if [[ -n "$opt_options" ]]; then
     run_at_exit "write_file $base_dir/trace_options $(cat $base_dir/trace_options)"
-    write_file $base_dir/trace_options "function-fork"
+    write_file $base_dir/trace_options $opt_options
 fi
 
 run_at_exit "write_file $base_dir/tracing_on $(cat $base_dir/tracing_on)"
