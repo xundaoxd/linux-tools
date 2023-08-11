@@ -16,7 +16,7 @@ run_at_exit() {
     post_hook+=("$@")
 }
 on_exit() {
-    for((i = ${#post_hook[@]} - 1;i >= 0;i--)); do
+    for((i = ${#post_hook[@]};i > 0;i--)); do
         ${post_hook[i]}
     done
 }
