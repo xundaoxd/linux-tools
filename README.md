@@ -5,4 +5,5 @@
 - [ ] ftracer
     - [x] function tracer
     - [x] graph tracer
+    - [x] opensnoop
 
