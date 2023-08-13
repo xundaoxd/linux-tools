@@ -1,3 +1,5 @@
+set -e
+
 die() {
     echo "$@"
     exit 1
@@ -22,3 +24,4 @@ on_exit() {
 }
 trap on_exit EXIT
 
+tracing_dir="/sys/kernel/tracing"

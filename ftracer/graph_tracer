@@ -1,17 +1,14 @@
-#!/bin/bash
-set -e
-
+#!/usr/bin/env bash
 self_path=$(realpath "${BASH_SOURCE[0]}")
+self_dir=$(dirname $self_path)
 proj_prefix=$(dirname "$(dirname "$self_path")")
-.   "$proj_prefix/utils/common.sh"
+.   "$self_dir/common.sh"
 
-base_dir="/sys/kernel/tracing"
+run_at_exit "write_file $tracing_dir/current_tracer $(cat $tracing_dir/current_tracer)"
+write_file $tracing_dir/current_tracer function_graph
 
-run_at_exit "write_file $base_dir/current_tracer $(cat $base_dir/current_tracer)"
-write_file $base_dir/current_tracer function_graph
+run_at_exit "write_file $tracing_dir/tracing_on $(cat $tracing_dir/tracing_on)"
+write_file $tracing_dir/tracing_on 1
 
-run_at_exit "write_file $base_dir/tracing_on $(cat $base_dir/tracing_on)"
-write_file $base_dir/tracing_on 1
-
-cat $base_dir/trace_pipe
+cat $tracing_dir/trace_pipe
 
