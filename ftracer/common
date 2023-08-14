@@ -1,4 +1,4 @@
-set -e
+set -euxo pipefail
 
 die() {
     echo "$@"
@@ -8,9 +8,13 @@ die() {
 write_file() {
     fname="$1"
     shift
-    for t in "$@"; do
-        echo "$t" > "$fname"
-    done
+    if (($# == 0)); then
+        echo > "$fname"
+    else
+        for t in "$@"; do
+            echo "$t" >> "$fname"
+        done
+    fi
 }
 
 post_hook=()

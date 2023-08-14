@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
 self_path=$(realpath "${BASH_SOURCE[0]}")
-self_dir=$(dirname $self_path)
-proj_prefix=$(dirname "$(dirname "$self_path")")
-.   "$self_dir/common.sh"
+self_dir=$(dirname "$self_path")
+.   "$self_dir/common"
 
+echo 'p:sys_open_probe do_sys_openat2 +0($arg2):string' >> $tracing_dir/kprobe_events
 run_at_exit "write_file $tracing_dir/kprobe_events -:sys_open_probe"
-echo "p:sys_open_probe do_sys_openat2 +0(\$arg2):string" >> $tracing_dir/kprobe_events
-run_at_exit "write_file $tracing_dir/events/kprobes/sys_open_probe/enable 0"
+
 echo 1 > $tracing_dir/events/kprobes/sys_open_probe/enable
+run_at_exit "write_file $tracing_dir/events/kprobes/sys_open_probe/enable 0"
 
+echo 'r:sys_open_retprobe do_sys_openat2 $retval' >> $tracing_dir/kprobe_events
 run_at_exit "write_file $tracing_dir/kprobe_events -:sys_open_retprobe"
-echo "r:sys_open_retprobe do_sys_openat2 \$retval" >> $tracing_dir/kprobe_events
-run_at_exit "write_file $tracing_dir/events/kprobes/sys_open_retprobe/enable 0"
-echo 1 > $tracing_dir/events/kprobes/sys_open_retprobe/enable
 
-run_at_exit "write_file $tracing_dir/tracing_on 0"
+echo 1 > $tracing_dir/events/kprobes/sys_open_retprobe/enable
+run_at_exit "write_file $tracing_dir/events/kprobes/sys_open_retprobe/enable 0"
+
 write_file $tracing_dir/tracing_on 1
+run_at_exit "write_file $tracing_dir/tracing_on 0"
 
 cat $tracing_dir/trace_pipe
 

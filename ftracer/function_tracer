@@ -1,19 +1,13 @@
 #!/usr/bin/env bash
 self_path=$(realpath "${BASH_SOURCE[0]}")
-self_dir=$(dirname $self_path)
-proj_prefix=$(dirname "$(dirname "$self_path")")
-.   "$self_dir/common.sh"
+self_dir=$(dirname "$self_path")
+.   "$self_dir/common"
 
 opt_pid=
-opt_options=
 while (( $# )); do
     case $1 in
         -p)
             opt_pid="$2"
-            shift
-            ;;
-        -o)
-            opt_options+=" $2"
             shift
             ;;
         *)  break;;
@@ -21,21 +15,16 @@ while (( $# )); do
     shift
 done
 
-run_at_exit "write_file $tracing_dir/current_tracer $(cat $tracing_dir/current_tracer)"
 write_file $tracing_dir/current_tracer function
+run_at_exit "write_file $tracing_dir/current_tracer nop"
 
 if [[ -n "$opt_pid" ]]; then
-    run_at_exit "write_file $tracing_dir/set_ftrace_pid"
     write_file $tracing_dir/set_ftrace_pid "$opt_pid"
+    run_at_exit "write_file $tracing_dir/set_ftrace_pid"
 fi
 
-if [[ -n "$opt_options" ]]; then
-    run_at_exit "write_file $tracing_dir/trace_options $(cat $tracing_dir/trace_options)"
-    write_file $tracing_dir/trace_options $opt_options
-fi
-
-run_at_exit "write_file $tracing_dir/tracing_on $(cat $tracing_dir/tracing_on)"
 write_file $tracing_dir/tracing_on 1
+run_at_exit "write_file $tracing_dir/tracing_on 0"
 
 cat $tracing_dir/trace_pipe
 

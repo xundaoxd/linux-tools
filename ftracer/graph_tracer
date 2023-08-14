@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 self_path=$(realpath "${BASH_SOURCE[0]}")
-self_dir=$(dirname $self_path)
-proj_prefix=$(dirname "$(dirname "$self_path")")
-.   "$self_dir/common.sh"
+self_dir=$(dirname "$self_path")
+.   "$self_dir/common"
 
-run_at_exit "write_file $tracing_dir/current_tracer $(cat $tracing_dir/current_tracer)"
 write_file $tracing_dir/current_tracer function_graph
+run_at_exit "write_file $tracing_dir/current_tracer nop"
 
-run_at_exit "write_file $tracing_dir/tracing_on $(cat $tracing_dir/tracing_on)"
 write_file $tracing_dir/tracing_on 1
+run_at_exit "write_file $tracing_dir/tracing_on 0"
 
 cat $tracing_dir/trace_pipe
 
