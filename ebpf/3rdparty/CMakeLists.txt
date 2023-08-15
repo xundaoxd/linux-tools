@@ -50,7 +50,6 @@ set_target_properties(bpftool
         IMPORTED_LOCATION ${INSTALL_DIR}bootstrap/bpftool)
 
 macro(ebpf_skel name)
-
     # clang
     execute_process(
         COMMAND bash -c "clang -v -E - < /dev/null 2>&1 |
@@ -66,18 +65,21 @@ macro(ebpf_skel name)
         message(FATAL_ERROR "Failed to determine BPF system includes: ${CLANG_SYSTEM_INCLUDES_error}")
     endif()
 
-    # arch TODO(for cross compile)
-    execute_process(COMMAND uname -m
-        COMMAND sed -e "s/x86_64/x86/" -e "s/aarch64/arm64/" -e "s/ppc64le/powerpc/" -e "s/mips.*/mips/"
-        OUTPUT_VARIABLE ARCH_output
-        ERROR_VARIABLE ARCH_error
-        RESULT_VARIABLE ARCH_result
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(${ARCH_result} EQUAL 0)
-        set(ARCH ${ARCH_output})
-        message(STATUS "BPF target arch: ${ARCH}")
-    else()
-        message(FATAL_ERROR "Failed to determine target architecture: ${ARCH_error}")
+    # arch
+    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+        set(ARCH "x86")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+        set(ARCH "arm")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+        set(ARCH "arm64")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+        set(ARCH "powerpc")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "mips")
+        set(ARCH "mips")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "riscv64")
+        set(ARCH "riscv")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "loongarch64")
+        set(ARCH "loongarch")
     endif()
 
     # vmlinux
@@ -88,23 +90,20 @@ macro(ebpf_skel name)
         get_filename_component(item_namewle ${item} NAME_WLE)
         set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewle}.skel.h)
         set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewle}.o)
-        add_custom_command(OUTPUT ${BPF_O_FILE}
+        add_custom_command(
+            OUTPUT ${BPF_SKEL_FILE} ${BPF_O_FILE}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMAND clang -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
                     ${CLANG_SYSTEM_INCLUDES} -I${VMLINUX_DIR}
-                    -isystem $<TARGET_PROPERTY:libbpf,INCLUDE_DIRS> -c ${item} -o ${BPF_O_FILE}
+                    -isystem $<TARGET_PROPERTY:libbpf,INCLUDE_DIRS>
+                    -c ${item} -o ${BPF_O_FILE}
+            COMMAND bash -c "$<TARGET_PROPERTY:bpftool,IMPORTED_LOCATION> gen skeleton ${BPF_O_FILE} > ${BPF_SKEL_FILE}"
             COMMAND_EXPAND_LISTS
             VERBATIM
-            DEPENDS ${item}
-            COMMENT "[clang] Building BPF object: ${name}")
-        add_custom_command(OUTPUT ${BPF_SKEL_FILE}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMAND bash -c "$<TARGET_PROPERTY:bpftool,IMPORTED_LOCATION> gen skeleton ${BPF_O_FILE} > ${BPF_SKEL_FILE}"
-            VERBATIM
-            DEPENDS ${BPF_O_FILE}
-            COMMENT "[skel]  Building BPF skeleton: ${name}")
+            DEPENDS ${item})
         list(APPEND skel_files ${BPF_SKEL_FILE})
     endforeach(item ${ARGN})
+
     add_library(${name} INTERFACE)
     target_sources(${name} PRIVATE ${skel_files})
     target_link_libraries(${name} INTERFACE libbpf elf z)
