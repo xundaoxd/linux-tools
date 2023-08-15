@@ -1,5 +1,5 @@
+#include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
-#include <linux/bpf.h>
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
