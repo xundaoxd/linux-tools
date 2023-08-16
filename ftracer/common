@@ -29,3 +29,5 @@ on_exit() {
 trap on_exit EXIT
 
 tracing_dir="/sys/kernel/tracing"
+[[ ! -d $tracing_dir ]] && die "tracefs not mount"
+
