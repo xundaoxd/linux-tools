@@ -6,4 +6,6 @@
     - [x] function tracer
     - [x] graph tracer
     - [x] opensnoop
+- [ ] ebpf
+    - [x] minimal
 
