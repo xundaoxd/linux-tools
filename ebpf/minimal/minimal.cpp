@@ -5,20 +5,10 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
-static int libbpf_print_fn(enum libbpf_print_level level, const char *format,
-                           va_list args) {
-  return vfprintf(stderr, format, args);
-}
-
 int main(int argc, char **argv) {
-  struct minimal_bpf *skel;
   int err;
 
-  /* Set up libbpf errors and debug info callback */
-  libbpf_set_print(libbpf_print_fn);
-
-  /* Open BPF application */
-  skel = minimal_bpf__open();
+  minimal_bpf *skel = minimal_bpf__open();
   if (!skel) {
     fprintf(stderr, "Failed to open BPF skeleton\n");
     return 1;
