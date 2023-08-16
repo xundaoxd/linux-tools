@@ -1,7 +1,4 @@
-#include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
-
-char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
 int my_pid = 0;
 
@@ -16,3 +13,5 @@ int handle_tp(void *ctx) {
 
   return 0;
 }
+
+char LICENSE[] SEC("license") = "Dual BSD/GPL";

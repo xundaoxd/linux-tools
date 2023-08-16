@@ -8,7 +8,7 @@
 int main(int argc, char **argv) {
   int err;
 
-  minimal *skel = minimal__open();
+  minimal_bpf *skel = minimal_bpf__open();
   if (!skel) {
     fprintf(stderr, "Failed to open BPF skeleton\n");
     return 1;
@@ -18,14 +18,14 @@ int main(int argc, char **argv) {
   skel->bss->my_pid = getpid();
 
   /* Load & verify BPF programs */
-  err = minimal__load(skel);
+  err = minimal_bpf__load(skel);
   if (err) {
     fprintf(stderr, "Failed to load and verify BPF skeleton\n");
     goto cleanup;
   }
 
   /* Attach tracepoint handler */
-  err = minimal__attach(skel);
+  err = minimal_bpf__attach(skel);
   if (err) {
     fprintf(stderr, "Failed to attach BPF skeleton\n");
     goto cleanup;
@@ -42,6 +42,6 @@ int main(int argc, char **argv) {
   }
 
 cleanup:
-  minimal__destroy(skel);
+  minimal_bpf__destroy(skel);
   return -err;
 }

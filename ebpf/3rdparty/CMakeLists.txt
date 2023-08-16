@@ -89,15 +89,16 @@ macro(ebpf_skel name)
 
     set(skel_files)
     foreach(item ${ARGN})
-        get_filename_component(item_namewle ${item} NAME_WE)
-        set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewle}.skel.h)
-        set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewle}.o)
+        get_filename_component(item_namewe ${item} NAME_WE)
+        set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewe}.skel.h)
+        set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewe}.bpf.o)
         add_custom_command(
             OUTPUT ${BPF_SKEL_FILE} ${BPF_O_FILE}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMAND clang -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
                     ${CLANG_SYSTEM_INCLUDES} -I${VMLINUX_DIR}
                     -isystem $<TARGET_PROPERTY:libbpf,INCLUDE_DIRS>
+                    --include=vmlinux.h
                     -c ${item} -o ${BPF_O_FILE}
             COMMAND bash -c "$<TARGET_PROPERTY:bpftool,IMPORTED_LOCATION> gen skeleton ${BPF_O_FILE} > ${BPF_SKEL_FILE}"
             COMMAND_EXPAND_LISTS
