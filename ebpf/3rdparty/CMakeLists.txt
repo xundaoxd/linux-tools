@@ -87,7 +87,7 @@ macro(ebpf_skel name)
 
     set(skel_files)
     foreach(item ${ARGN})
-        get_filename_component(item_namewle ${item} NAME_WLE)
+        get_filename_component(item_namewle ${item} NAME_WE)
         set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewle}.skel.h)
         set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewle}.o)
         add_custom_command(
