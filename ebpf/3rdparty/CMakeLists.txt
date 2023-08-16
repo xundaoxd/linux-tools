@@ -8,6 +8,7 @@ ExternalProject_Add(
     GIT_TAG             f8cd00f61302ca4d8645e007acf7f546dc323b33
     CONFIGURE_COMMAND   ""
     BUILD_COMMAND       make
+        CC=${CMAKE_C_COMPILER}
         BUILD_STATIC_ONLY=1
         DESTDIR=<INSTALL_DIR>
         INCLUDEDIR=
@@ -37,6 +38,7 @@ ExternalProject_Add(
     GIT_TAG             259f40fd5bde67025beb1371d269c91bbe5d42ed
     CONFIGURE_COMMAND   ""
     BUILD_COMMAND       make
+        CC=${CMAKE_C_COMPILER}
         bootstrap
         -C <SOURCE_DIR>/src
         OUTPUT=<INSTALL_DIR>
