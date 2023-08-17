@@ -7,8 +7,8 @@ set(CMAKE_C_COMPILER   /usr/bin/aarch64-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++)
 
 # where is the target environment located
-# set(CMAKE_FIND_ROOT_PATH  /usr/i586-mingw32msvc
-#     /home/alex/mingw-install)
+set(CMAKE_SYSROOT /sysroot)
+set(CMAKE_FIND_ROOT_PATH  ${CMAKE_SYSROOT} ${CMAKE_SYSROOT}/usr ${CMAKE_SYSROOT}/usr/local)
 
 # adjust the default behavior of the FIND_XXX() commands:
 # search programs in the host environment

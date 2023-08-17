@@ -25,8 +25,8 @@ set_target_properties(libbpf
     PROPERTIES
         SOURCE_DIR ${SOURCE_DIR}
         INSTALL_DIR ${INSTALL_DIR}
-        INCLUDE_DIRS ${INSTALL_DIR}
-        LIBRARIES ${INSTALL_DIR}/libbpf.a)
+        BPF_INCLUDE_DIRECTORIES "${INSTALL_DIR};${SOURCE_DIR}/include/uapi"
+)
 target_include_directories(libbpf INTERFACE ${INSTALL_DIR})
 target_link_libraries(libbpf INTERFACE ${INSTALL_DIR}/libbpf.a)
 
@@ -97,7 +97,7 @@ macro(ebpf_skel name)
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMAND clang -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
                     ${CLANG_SYSTEM_INCLUDES} -I${VMLINUX_DIR}
-                    -isystem $<TARGET_PROPERTY:libbpf,INCLUDE_DIRS>
+                    "-isystem;$<JOIN:$<TARGET_PROPERTY:libbpf,BPF_INCLUDE_DIRECTORIES>,;-isystem;>"
                     --include=vmlinux.h
                     -c ${item} -o ${BPF_O_FILE}
             COMMAND bash -c "$<TARGET_PROPERTY:bpftool,IMPORTED_LOCATION> gen skeleton ${BPF_O_FILE} > ${BPF_SKEL_FILE}"
