@@ -8,4 +8,5 @@
     - [x] opensnoop
 - [ ] ebpf
     - [x] minimal
+    - [x] bootstrap
 
