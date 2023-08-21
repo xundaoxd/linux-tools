@@ -1,7 +1,7 @@
 {
     "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
     "hostRequirements": {
-        "gpu": "optional"
+        "gpu": true
     },
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker:1": {
