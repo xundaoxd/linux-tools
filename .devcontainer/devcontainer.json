@@ -1,5 +1,16 @@
 {
-  "image": "ghcr.io/xundaoxd/ml:cross-latest",
-  "features": {
-  }
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "hostRequirements": {
+        "gpu": "optional"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:1": {
+            "version": "latest",
+            "moby": true
+        },
+        "ghcr.io/devcontainers/features/nvidia-cuda:1": {
+            "installCudnn": true,
+            "installNvtx": true
+        }
+    }
 }
