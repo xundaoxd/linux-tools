@@ -1,4 +1,4 @@
-#include "minimal.skel.h"
+#include "syscall.skel.h"
 
 #include <bpf/libbpf.h>
 #include <stdio.h>
@@ -8,21 +8,21 @@
 int main(int argc, char **argv) {
   int err;
 
-  minimal_bpf *skel = minimal_bpf__open();
+  syscall_bpf *skel = syscall_bpf__open();
   if (!skel) {
     fprintf(stderr, "Failed to open BPF skeleton\n");
     return 1;
   }
 
   /* Load & verify BPF programs */
-  err = minimal_bpf__load(skel);
+  err = syscall_bpf__load(skel);
   if (err) {
     fprintf(stderr, "Failed to load and verify BPF skeleton\n");
     goto cleanup;
   }
 
   /* Attach tracepoint handler */
-  err = minimal_bpf__attach(skel);
+  err = syscall_bpf__attach(skel);
   if (err) {
     fprintf(stderr, "Failed to attach BPF skeleton\n");
     goto cleanup;
@@ -39,6 +39,6 @@ int main(int argc, char **argv) {
   }
 
 cleanup:
-  minimal_bpf__destroy(skel);
+  syscall_bpf__destroy(skel);
   return -err;
 }
