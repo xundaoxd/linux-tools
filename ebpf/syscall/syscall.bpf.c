@@ -7,7 +7,7 @@ int BPF_KSYSCALL(write_entry) {
   char comm[TASK_COMM_LEN];
   bpf_get_current_comm(&comm, sizeof(comm));
 
-  bpf_printk("write_entry, comm: %s, pid: %d", comm, pid);
+  bpf_printk("write_entry, pid: %d, comm: %s", pid, comm);
   return 0;
 }
 
