@@ -23,8 +23,6 @@ ExternalProject_Get_property(libbpf-proj INSTALL_DIR SOURCE_DIR)
 add_library(libbpf INTERFACE)
 set_target_properties(libbpf
     PROPERTIES
-        SOURCE_DIR ${SOURCE_DIR}
-        INSTALL_DIR ${INSTALL_DIR}
         BPF_INCLUDE_DIRECTORIES "${INSTALL_DIR};${SOURCE_DIR}/include/uapi"
 )
 target_include_directories(libbpf INTERFACE ${INSTALL_DIR})
@@ -87,13 +85,15 @@ macro(ebpf_skel name)
     # vmlinux
     set(VMLINUX_DIR ${CMAKE_SOURCE_DIR}/vmlinux/${ARCH})
 
-    set(skel_files)
+    add_library(${name} INTERFACE)
+    target_link_libraries(${name} INTERFACE libbpf elf z)
+    target_include_directories(${name} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
     foreach(item ${ARGN})
         get_filename_component(item_namewe ${item} NAME_WE)
         set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewe}.skel.h)
         set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${item_namewe}.bpf.o)
-        add_custom_command(
-            OUTPUT ${BPF_SKEL_FILE} ${BPF_O_FILE}
+        add_custom_target(
+            ${item_namewe}_h
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMAND clang -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
                     ${CLANG_SYSTEM_INCLUDES} -I${VMLINUX_DIR}
@@ -104,11 +104,6 @@ macro(ebpf_skel name)
             COMMAND_EXPAND_LISTS
             VERBATIM
             DEPENDS ${item})
-        list(APPEND skel_files ${BPF_SKEL_FILE})
+        add_dependencies(${name} ${item_namewe}_h)
     endforeach(item ${ARGN})
-
-    add_library(${name} INTERFACE)
-    target_sources(${name} PRIVATE ${skel_files})
-    target_link_libraries(${name} INTERFACE libbpf elf z)
-    target_include_directories(${name} INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
 endmacro()
