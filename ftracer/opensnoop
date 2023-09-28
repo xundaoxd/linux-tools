@@ -1,22 +1,39 @@
 #!/usr/bin/env bash
-self_path=$(realpath "${BASH_SOURCE[0]}")
-self_dir=$(dirname "$self_path")
-.   "$self_dir/common"
+set -euxo pipefail
 
-echo 'p:sys_open_probe do_sys_openat2 +0($arg2):string' >> $tracing_dir/kprobe_events
-run_at_exit "write_file $tracing_dir/kprobe_events -:sys_open_probe"
+die() {
+    echo "$@"
+    exit 1
+}
 
-echo 1 > $tracing_dir/events/kprobes/sys_open_probe/enable
-run_at_exit "write_file $tracing_dir/events/kprobes/sys_open_probe/enable 0"
+exit_hooks=()
+run_atexit() {
+    exit_hooks+=("$*")
+}
+atexit() {
+    for ((i = ${#exit_hooks[@]} - 1; i >= 0; i--)); do
+        if ! eval ${exit_hooks[$i]}; then
+            die "WARNING: command failed \"${exit_hooks[$i]}\""
+        fi
+    done
+}
+trap 'atexit' EXIT
 
-echo 'r:sys_open_retprobe do_sys_openat2 $retval' >> $tracing_dir/kprobe_events
-run_at_exit "write_file $tracing_dir/kprobe_events -:sys_open_retprobe"
+tracing_dir="/sys/kernel/tracing"
+[[ ! -d $tracing_dir ]] && die "tracefs not mount"
 
-echo 1 > $tracing_dir/events/kprobes/sys_open_retprobe/enable
-run_at_exit "write_file $tracing_dir/events/kprobes/sys_open_retprobe/enable 0"
+do_kprobe() {
+    name="${1#*:}"
+    echo "$1 $2 $3" >> $tracing_dir/kprobe_events
+    run_atexit "echo -:${name} >> $tracing_dir/kprobe_events"
 
-write_file $tracing_dir/tracing_on 1
-run_at_exit "write_file $tracing_dir/tracing_on 0"
+    echo 1 > $tracing_dir/events/kprobes/${name}/enable
+    run_atexit "echo 0 > $tracing_dir/events/kprobes/${name}/enable"
+}
 
+do_kprobe 'p:do_sys_openat2' 'do_sys_openat2' '+0($arg2):string'
+
+echo 1 > $tracing_dir/tracing_on
+run_atexit "echo 0 > $tracing_dir/tracing_on"
 cat $tracing_dir/trace_pipe
 
