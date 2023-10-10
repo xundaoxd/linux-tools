@@ -24,6 +24,15 @@ run_atexit() {
     post_hooks+=("$*")
 }
 
+# do_event 'kmem:mm_page_alloc' ...
+do_event() {
+    for e in "$@"; do
+        local ename="${e//://}"
+        do_run "echo 1 > $tracefs/events/$ename/enable"
+        run_atexit "echo 0 > $tracefs/events/$ename/enable"
+    done
+}
+
 # do_kprobe 'p:myopen do_sys_open filename=+0(%si):string' ...
 do_kprobe() {
     for k in "$@"; do
@@ -31,7 +40,36 @@ do_kprobe() {
         local kname=${tmp%% *}
         do_run "echo '$k' >> '$tracefs/kprobe_events'"
         run_atexit "echo -:$kname >> $tracefs/kprobe_events"
-        do_run "echo 1 > '$tracefs/events/kprobes/$kname/enable'"
-        run_atexit "echo 0 > $tracefs/events/kprobes/$kname/enable"
+        do_event "kprobes:$kname"
     done
+}
+
+main() {
+    local opt_duration=
+    local opt_stacktrace=
+    while getopts 'd:s' opt; do
+        case $opt in
+            d)  opt_duration="$OPTARG";;
+            s)  opt_stacktrace=1;;
+            ?)  err "undefined opt: $opt";
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    do_main "$@"
+
+    if [[ -n "$opt_stacktrace" ]]; then
+        echo 1 > $tracefs/options/stacktrace
+        run_atexit "echo 0 > $tracefs/options/stacktrace"
+    fi
+
+    echo 1 > "$tracefs/tracing_on"
+    run_atexit "echo 0 > $tracefs/tracing_on"
+
+    if [ -n "$opt_duration" ]; then
+        run_atexit "cat $tracefs/trace"
+        sleep "$opt_duration"
+    else
+        cat "$tracefs/trace_pipe"
+    fi
 }
