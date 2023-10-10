@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+tracefs="/sys/kernel/debug/tracing"
+
+err() {
+    echo "$@"
+    exit 1
+}
+
+do_run() {
+    if ! eval "$@"; then
+        err "WARNING: command failed \"$@\""
+    fi
+}
+
+post_hooks=()
+atexit() {
+    for ((i = ${#post_hooks[@]} - 1; i >= 0; i--)) {
+        do_run "${post_hooks[i]}"
+    }
+}
+trap atexit EXIT
+run_atexit() {
+    post_hooks+=("$*")
+}
+
+# do_kprobe 'p:myopen do_sys_open filename=+0(%si):string' ...
+do_kprobe() {
+    for k in "$@"; do
+        local tmp=${k#*:}
+        local kname=${tmp%% *}
+        do_run "echo '$k' >> '$tracefs/kprobe_events'"
+        run_atexit "echo -:$kname >> $tracefs/kprobe_events"
+        do_run "echo 1 > '$tracefs/events/kprobes/$kname/enable'"
+        run_atexit "echo 0 > $tracefs/events/kprobes/$kname/enable"
+    done
+}

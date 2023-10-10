@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -e
+
+self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+.   "$self_dir/common"
+
+opt_duration=
+opt_stacktrace=
+
+main() {
+    do_kprobe "$@"
+
+    if [[ -n "$opt_stacktrace" ]]; then
+        echo 1 > $tracefs/options/stacktrace
+        run_atexit "echo 0 > $tracefs/options/stacktrace"
+    fi
+
+    echo 1 > "$tracefs/tracing_on"
+    run_atexit "echo 0 > $tracefs/tracing_on"
+
+    if [ -n "$opt_duration" ]; then
+        run_atexit "cat $tracefs/trace"
+        sleep "$opt_duration"
+    else
+        cat "$tracefs/trace_pipe"
+    fi
+}
+
+while getopts 'd:s' opt; do
+    case $opt in
+        d)  opt_duration="$OPTARG";;
+        s)  opt_stacktrace=1;;
+        ?)  err "undefined opt: $opt";
+    esac
+done
+shift $((OPTIND - 1))
+main "$@"
+

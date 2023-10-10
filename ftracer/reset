@@ -1,29 +1,12 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -xe
 
-die() {
-    echo "$@"
-    exit 1
-}
+self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+.   "$self_dir/common"
 
-exit_hooks=()
-run_atexit() {
-    exit_hooks+=("$*")
-}
-atexit() {
-    for ((i = ${#exit_hooks[@]} - 1; i >= 0; i--)); do
-        if ! eval ${exit_hooks[$i]}; then
-            die "WARNING: command failed \"${exit_hooks[$i]}\""
-        fi
-    done
-}
-trap 'atexit' EXIT
+[ -e "$tracefs/events/kprobes" ] && do_run "echo 0 > '$tracefs/events/kprobes/enable'"
+echo > "$tracefs/kprobe_events"
 
-tracing_dir="/sys/kernel/tracing"
-[[ ! -d $tracing_dir ]] && die "tracefs not mount"
-
-[ -w $tracing_dir/events/kprobes/enable ] && echo 0 > $tracing_dir/events/kprobes/enable
-echo > $tracing_dir/kprobe_events
-echo 0 > $tracing_dir/tracing_on
-echo nop $tracing_dir/current_tracer
+echo nop > "$tracefs/current_tracer"
+echo 0 > "$tracefs/tracing_on"
 
