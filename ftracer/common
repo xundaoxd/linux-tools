@@ -26,22 +26,30 @@ run_atexit() {
 
 # do_event 'kmem:mm_page_alloc' ...
 do_event() {
-    for e in "$@"; do
-        local ename="${e//://}"
-        do_run "echo 1 > $tracefs/events/$ename/enable"
-        run_atexit "echo 0 > $tracefs/events/$ename/enable"
-    done
+    local e="$1"
+    local ename="${e//://}"
+    do_run "echo 1 > $tracefs/events/$ename/enable"
+    run_atexit "echo 0 > $tracefs/events/$ename/enable"
 }
 
 # do_kprobe 'p:myopen do_sys_open filename=+0(%si):string' ...
 do_kprobe() {
-    for k in "$@"; do
-        local tmp=${k#*:}
-        local kname=${tmp%% *}
-        do_run "echo '$k' >> '$tracefs/kprobe_events'"
-        run_atexit "echo -:$kname >> $tracefs/kprobe_events"
-        do_event "kprobes:$kname"
-    done
+    local k="$1"
+    local tmp=${k#*:}
+    local kname=${tmp%% *}
+    do_run "echo '$k' >> '$tracefs/kprobe_events'"
+    run_atexit "echo -:$kname >> $tracefs/kprobe_events"
+    echo "$kname"
+}
+
+do_kprobe_enabled() {
+    local k="$1"
+    local tmp=${k#*:}
+    local kname=${tmp%% *}
+    do_run "echo '$k' >> '$tracefs/kprobe_events'"
+    run_atexit "echo -:$kname >> $tracefs/kprobe_events"
+    do_event "kprobes:$kname"
+    echo "$kname"
 }
 
 main() {

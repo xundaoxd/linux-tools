@@ -5,7 +5,9 @@ self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 .   "$self_dir/common"
 
 do_main() {
-    do_event "$@"
+    for t in "$@"; do
+        do_event "$t"
+    done
 }
 
 main "$@"
