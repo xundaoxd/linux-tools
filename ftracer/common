@@ -9,7 +9,7 @@ err() {
 
 do_run() {
     if ! eval "$@"; then
-        err "WARNING: command failed \"$@\""
+        err "WARNING: command failed \"$*\""
     fi
 }
 
