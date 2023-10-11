@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+.   "$self_dir/common"
+
+marks=(
+    "perception:/opt/deeproute/driver/integration/components/libperception_component.so:0x000000000000dd60"
+    "planning:/opt/deeproute/driver/integration/components/libplanning_component.so:0x0000000000024ab0"
+    "percep_aeb:/opt/deeproute/driver/integration/components/libpercep_aeb_component.so:0x000000000000b3a0"
+    "ctrl:/opt/deeproute/driver/integration/components/libcontrol_component.so:0x000000000000cc10"
+    "map_engine:/opt/deeproute/driver/integration/components/libmap_engine_component.so:0x00000000000164b0"
+    "aeb:/opt/deeproute/driver/integration/components/libaeb_component.so:0x000000000000f500"
+)
+do_main() {
+    for tmp in "${marks[@]}"; do
+        IFS=":" read -r -a mark <<< "$tmp"
+        do_uprobe_enabled "p:${mark[0]}_Enter ${mark[1]}:${mark[2]}" >/dev/null
+        do_uprobe_enabled "r:${mark[0]}_Exit ${mark[1]}:${mark[2]}" >/dev/null
+    done
+}
+
+main "$@"
+
