@@ -6,7 +6,7 @@ self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 do_main() {
     for t in "$@"; do
-        do_kprobe_enabled "$t"
+        do_kprobe_enabled "$t" > /dev/null
     done
 }
 

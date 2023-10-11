@@ -6,7 +6,7 @@ self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 
 do_main() {
     for t in "$@"; do
-        do_uprobe_enabled "$t"
+        do_uprobe_enabled "$t" > /dev/null
     done
 }
 
