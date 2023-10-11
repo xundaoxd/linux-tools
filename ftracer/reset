@@ -7,6 +7,9 @@ self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 [ -e "$tracefs/events/kprobes" ] && do_run "echo 0 > '$tracefs/events/kprobes/enable'"
 echo > "$tracefs/kprobe_events"
 
+[ -e "$tracefs/events/uprobes" ] && do_run "echo 0 > '$tracefs/events/uprobes/enable'"
+echo > "$tracefs/uprobe_events"
+
 echo nop > "$tracefs/current_tracer"
 echo 0 > "$tracefs/tracing_on"
 

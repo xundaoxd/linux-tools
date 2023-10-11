@@ -24,7 +24,7 @@ run_atexit() {
     post_hooks+=("$*")
 }
 
-# do_event 'kmem:mm_page_alloc' ...
+# do_event 'kmem:mm_page_alloc'
 do_event() {
     local e="$1"
     local ename="${e//://}"
@@ -32,7 +32,7 @@ do_event() {
     run_atexit "echo 0 > $tracefs/events/$ename/enable"
 }
 
-# do_kprobe 'p:myopen do_sys_open filename=+0(%si):string' ...
+# do_kprobe 'p:myopen do_sys_open filename=+0(%si):string'
 do_kprobe() {
     local k="$1"
     local tmp=${k#*:}
@@ -43,12 +43,26 @@ do_kprobe() {
 }
 
 do_kprobe_enabled() {
+    local kname
+    kname=$(do_kprobe "$1")
+    do_event "kprobes:$kname"
+    echo "$kname"
+}
+
+# do_uprobe 'p /bin/bash:0x4245c0'
+do_uprobe() {
     local k="$1"
     local tmp=${k#*:}
     local kname=${tmp%% *}
-    do_run "echo '$k' >> '$tracefs/kprobe_events'"
-    run_atexit "echo -:$kname >> $tracefs/kprobe_events"
-    do_event "kprobes:$kname"
+    do_run "echo '$k' >> $tracefs/uprobe_events"
+    run_atexit "echo -:$kname >> $tracefs/uprobe_events"
+    echo "$kname"
+}
+
+do_uprobe_enabled() {
+    local kname
+    kname="$(do_uprobe "$1")"
+    do_event "uprobes:$kname"
     echo "$kname"
 }
 
