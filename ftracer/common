@@ -43,8 +43,10 @@ do_kprobe() {
 }
 
 do_kprobe_enabled() {
-    local kname
-    kname=$(do_kprobe "$1")
+    local k="$1"
+    local tmp=${k#*:}
+    local kname=${tmp%% *}
+    do_kprobe "$1"
     do_event "kprobes:$kname"
     echo "$kname"
 }
@@ -60,8 +62,10 @@ do_uprobe() {
 }
 
 do_uprobe_enabled() {
-    local kname
-    kname="$(do_uprobe "$1")"
+    local k="$1"
+    local tmp=${k#*:}
+    local kname=${tmp%% *}
+    do_uprobe "$1"
     do_event "uprobes:$kname"
     echo "$kname"
 }
