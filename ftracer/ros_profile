@@ -5,18 +5,18 @@ self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 .   "$self_dir/common"
 
 marks=(
-    "perception:/opt/deeproute/driver/integration/components/libperception_component.so:0x000000000000dd60"
-    "planning:/opt/deeproute/driver/integration/components/libplanning_component.so:0x0000000000024ab0"
-    "percep_aeb:/opt/deeproute/driver/integration/components/libpercep_aeb_component.so:0x000000000000b3a0"
-    "ctrl:/opt/deeproute/driver/integration/components/libcontrol_component.so:0x000000000000cc10"
-    "map_engine:/opt/deeproute/driver/integration/components/libmap_engine_component.so:0x00000000000164b0"
-    "aeb:/opt/deeproute/driver/integration/components/libaeb_component.so:0x000000000000f500"
+    "perception:/opt/deeproute/driver/integration/components/libperception_component.so:_ZN9DeepRoute10perception19PerceptionComponent4ProcERKSt6vectorISt10shared_ptrIKN9deeproute6church4node14OnboardMessageEESaIS9_EEPS2_IS3_IS7_ESaISE_EE"
+    "planning:/opt/deeproute/driver/integration/components/libplanning_component.so:_ZN9DeepRoute8planning17PlanningComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
+    "percep_aeb:/opt/deeproute/driver/integration/components/libpercep_aeb_component.so:_ZN9deeproute3aeb18PercepAebComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
+    "ctrl:/opt/deeproute/driver/integration/components/libcontrol_component.so:_ZN9DeepRoute7control16ControlComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
+    "map_engine:/opt/deeproute/driver/integration/components/libmap_engine_component.so:_ZN9deeproute10map_engine18MapEngineComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
+    "aeb:/opt/deeproute/driver/integration/components/libaeb_component.so:_ZN9DeepRoute3aeb12AEBComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
 )
 do_main() {
     for tmp in "${marks[@]}"; do
         IFS=":" read -r -a mark <<< "$tmp"
-        do_uprobe_enabled "p:${mark[0]}_Enter ${mark[1]}:${mark[2]}" >/dev/null
-        do_uprobe_enabled "r:${mark[0]}_Exit ${mark[1]}:${mark[2]}" >/dev/null
+        do_uprobe_enabled "p:${mark[0]}_Enter:${mark[1]}:${mark[2]}" >/dev/null
+        do_uprobe_enabled "r:${mark[0]}_Exit:${mark[1]}:${mark[2]}" >/dev/null
     done
 }
 

@@ -13,6 +13,23 @@ do_run() {
     fi
 }
 
+join() {
+    local IFS="$1"
+    shift
+    echo "$*"
+}
+
+get_addr() {
+    local bin="$1"
+    local sym="$2"
+    local addr
+    addr=$(objdump -tT "${bin}" | awk -v sym="${sym}" '$NF == sym && $4 == ".text" {print $1;exit}')
+    [[ "$addr" == "" ]] && err "missing sym: ${bin}:${sym}"
+    [[ 0x$addr == 0 ]] && err "failed resolve: ${bin}:${sym}"
+    addr=0x$(printf "%x" 0x$addr)
+    echo "$addr"
+}
+
 post_hooks=()
 atexit() {
     for ((i = ${#post_hooks[@]} - 1; i >= 0; i--)) {
@@ -26,48 +43,62 @@ run_atexit() {
 
 # do_event 'kmem:mm_page_alloc'
 do_event() {
-    local e="$1"
-    local ename="${e//://}"
-    do_run "echo 1 > $tracefs/events/$ename/enable"
-    run_atexit "echo 0 > $tracefs/events/$ename/enable"
+    for e in "$@"; do
+        local ename="${e//://}"
+        do_run "echo 1 > $tracefs/events/$ename/enable"
+        run_atexit "echo 0 > $tracefs/events/$ename/enable"
+    done
 }
 
-# do_kprobe 'p:myopen do_sys_open filename=+0(%si):string'
+# do_kprobe
+# p:myopen:do_sys_open filename=+0(%si):string
 do_kprobe() {
-    local k="$1"
-    local tmp=${k#*:}
-    local kname=${tmp%% *}
-    do_run "echo '$k' >> '$tracefs/kprobe_events'"
-    run_atexit "echo -:$kname >> $tracefs/kprobe_events"
-    echo "$kname"
+    local kprobe
+    for k in "$@"; do
+       IFS=":" read -r -a kprobe <<< "$k"
+       do_run "echo '${kprobe[0]}:${kprobe[1]} ${kprobe[2]}' >> '$tracefs/kprobe_events'"
+       run_atexit "echo -:${kprobe[1]} >> $tracefs/kprobe_events"
+    done
 }
 
+# do_kprobe_enabled
+# p:do_sys_open filename=+0(%si):string
+# p:myopen:do_sys_open filename=+0(%si):string
 do_kprobe_enabled() {
-    local k="$1"
-    local tmp=${k#*:}
-    local kname=${tmp%% *}
-    do_kprobe "$1"
-    do_event "kprobes:$kname"
-    echo "$kname"
+    local kprobe
+    for k in "$@"; do
+        IFS=":" read -r -a kprobe <<< "$k"
+        (( ${#kprobe[@]} == 2 )) && kprobe=("${kprobe[0]}" "${kprobe[2]%% *}" "${kprobe[2]:1}")
+        (( ${#kprobe[@]} != 3 )) && err "kprobe err: $1"
+        do_kprobe "$(join ':' "${kprobe[@]}")"
+        do_event "kprobes:${kprobe[1]}"
+    done
 }
 
-# do_uprobe 'p /bin/bash:0x4245c0'
+# do_uprobe
+# p:bash:/bin/bash:0x4245c0
 do_uprobe() {
-    local k="$1"
-    local tmp=${k#*:}
-    local kname=${tmp%% *}
-    do_run "echo '$k' >> $tracefs/uprobe_events"
-    run_atexit "echo -:$kname >> $tracefs/uprobe_events"
-    echo "$kname"
+    local uprobe
+    for u in "$@"; do
+        IFS=":" read -r -a uprobe <<< "$u"
+        [[ "${uprobe[3]}" != 0x* ]] && uprobe[3]=$(get_addr "${uprobe[2]}" "${uprobe[3]}")
+        do_run "echo '${uprobe[0]}:${uprobe[1]} ${uprobe[2]}:${uprobe[3]}' >> $tracefs/uprobe_events"
+        run_atexit "echo -:${uprobe[1]} >> $tracefs/uprobe_events"
+    done
 }
 
+# do_uprobe_enabled
+# p:/bin/bash:0x4245c0
+# p:bash:/bin/bash:0x4245c0
 do_uprobe_enabled() {
-    local k="$1"
-    local tmp=${k#*:}
-    local kname=${tmp%% *}
-    do_uprobe "$1"
-    do_event "uprobes:$kname"
-    echo "$kname"
+    local uprobe
+    for u in "$@"; do
+        IFS=":" read -r -a uprobe <<< "$u"
+        (( ${#uprobe[@]} == 3 )) && uprobe=("${uprobe[0]}" "${uprobe[1]##*/}_${uprobe[2]}" "${uprobe[@]:1}")
+        (( ${#uprobe[@]} != 4 )) && err "uprobe err: $1"
+        do_uprobe "$(join ':' "${uprobe[@]}")"
+        do_event "uprobes:${uprobe[1]}"
+    done
 }
 
 main() {
