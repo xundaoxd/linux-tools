@@ -105,7 +105,7 @@ do_uprobe_enabled() {
 opt_duration=
 opt_stacktrace=
 
-opt_pid=
+opt_pid=()
 opt_followfork=
 opt_filter=()
 
@@ -122,8 +122,8 @@ prev_event_hook() {
 }
 
 init_event_options() {
-    if [[ -n "$opt_pid" ]]; then
-        echo "$opt_pid" > "$tracefs/set_event_pid"
+    if (( ${#opt_pid[@]} )); then
+        echo "${opt_pid[*]}" > "$tracefs/set_event_pid"
         run_atexit "echo > $tracefs/set_event_pid"
         if [[ -n "$opt_followfork" ]]; then
             echo 1 > "$tracefs/options/event-fork"
@@ -147,7 +147,7 @@ main() {
                 opt_stacktrace=1
                 ;;
             -p | --pid)
-                opt_pid="$2"
+                opt_pid+=("$2")
                 shift
                 ;;
             -ff | --follow-fork)
