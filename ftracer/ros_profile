@@ -14,7 +14,7 @@ marks=(
 )
 
 do_main() {
-    opt_filter+=('prev_comm ~ "mainboard*" || next_comm ~ "mainboard*"')
+    opt_filter+=('sched:sched_switch:prev_comm ~ "w_task_*" || next_comm ~ "w_task_*"')
     do_event "sched:sched_switch"
 
     local probes=()
