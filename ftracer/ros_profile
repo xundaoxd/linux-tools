@@ -12,7 +12,11 @@ marks=(
     "map_engine:/opt/deeproute/driver/integration/components/libmap_engine_component.so:_ZN9deeproute10map_engine18MapEngineComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
     "aeb:/opt/deeproute/driver/integration/components/libaeb_component.so:_ZN9DeepRoute3aeb12AEBComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
 )
+
 do_main() {
+    opt_filter+=('prev_comm ~ "mainboard*" || next_comm ~ "mainboard*"')
+    do_event "sched:sched_switch"
+
     local probes=()
     for tmp in "${marks[@]}"; do
         IFS=":" read -r -a mark <<< "$tmp"
@@ -20,6 +24,7 @@ do_main() {
         probes+=("r:${mark[0]}_Exit:${mark[1]}:${mark[2]}")
     done
     do_uprobe_enabled "${probes[@]}"
+
     init_event_options "${probes[@]}"
 }
 

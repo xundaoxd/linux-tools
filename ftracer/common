@@ -117,6 +117,7 @@ prev_event_hook() {
         if (( ${#filter[@]} == 1 )) || [[ "$f" == ${e}* ]]; then
             f=${f##*:}
             echo "$f" > "$tracefs/events/$ename/filter"
+            run_atexit "echo 0 > $tracefs/events/$ename/filter"
         fi
     done
 }
