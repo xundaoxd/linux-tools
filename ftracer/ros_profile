@@ -13,11 +13,14 @@ marks=(
     "aeb:/opt/deeproute/driver/integration/components/libaeb_component.so:_ZN9DeepRoute3aeb12AEBComponent4ProcERKSt13unordered_mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESt10shared_ptrIKN6google8protobuf7MessageEESt4hashIS8_ESt8equal_toIS8_ESaISt4pairIKS8_SE_EEEPS2_IS8_St6vectorIS9_ISC_ESaISR_EESG_SI_SaISJ_ISK_ST_EEE"
 )
 do_main() {
+    local probes=()
     for tmp in "${marks[@]}"; do
         IFS=":" read -r -a mark <<< "$tmp"
-        do_uprobe_enabled "p:${mark[0]}_Enter:${mark[1]}:${mark[2]}" >/dev/null
-        do_uprobe_enabled "r:${mark[0]}_Exit:${mark[1]}:${mark[2]}" >/dev/null
+        probes+=("p:${mark[0]}_Enter:${mark[1]}:${mark[2]}")
+        probes+=("r:${mark[0]}_Exit:${mark[1]}:${mark[2]}")
     done
+    do_uprobe_enabled "${probes[@]}"
+    init_event_options "${probes[@]}"
 }
 
 main "$@"

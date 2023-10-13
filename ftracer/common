@@ -45,6 +45,7 @@ run_atexit() {
 do_event() {
     for e in "$@"; do
         local ename="${e//://}"
+        prev_event_hook "$e"
         do_run "echo 1 > $tracefs/events/$ename/enable"
         run_atexit "echo 0 > $tracefs/events/$ename/enable"
     done
@@ -101,18 +102,71 @@ do_uprobe_enabled() {
     done
 }
 
-main() {
-    local opt_duration=
-    local opt_stacktrace=
-    while getopts 'd:s' opt; do
-        case $opt in
-            d)  opt_duration="$OPTARG";;
-            s)  opt_stacktrace=1;;
-            ?)  err "undefined opt: $opt";
-        esac
-    done
-    shift $((OPTIND - 1))
+opt_duration=
+opt_stacktrace=
 
+opt_pid=
+opt_followfork=
+opt_filter=()
+
+prev_event_hook() {
+    local e="$1"
+    local ename="${e//://}"
+    for f in "${opt_filter[@]}"; do
+        IFS=":" read -r -a filter <<< "$f"
+        if (( ${#filter[@]} == 1 )) || [[ "$f" == ${e}* ]]; then
+            f=${f##*:}
+            echo "$f" > "$tracefs/events/$ename/filter"
+        fi
+    done
+}
+
+init_event_options() {
+    if [[ -n "$opt_pid" ]]; then
+        echo "$opt_pid" > "$tracefs/set_event_pid"
+        run_atexit "echo > $tracefs/set_event_pid"
+        if [[ -n "$opt_followfork" ]]; then
+            echo 1 > "$tracefs/options/event-fork"
+            run_atexit "echo 0 > $tracefs/options/event-fork"
+        fi
+    fi
+}
+
+usage() {
+    echo 'usage'
+}
+
+main() {
+    while (( $# )); do
+        case "$1" in
+            -d | --duration)
+                opt_duration="$2"
+                shift
+                ;;
+            -s | --stacktrace)
+                opt_stacktrace=1
+                ;;
+            -p | --pid)
+                opt_pid="$2"
+                shift
+                ;;
+            -ff | --follow-fork)
+                opt_followfork=1
+                ;;
+            -f | --filter)
+                opt_filter+=("$2")
+                shift
+                ;;
+            -h | --help)
+                usage
+                exit 0
+                ;;
+            *)
+                break
+                ;;
+        esac
+        shift
+    done
     do_main "$@"
 
     if [[ -n "$opt_stacktrace" ]]; then
