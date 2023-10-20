@@ -1,11 +1,12 @@
 #pragma once
 
+#include <linux/perf_event.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
 namespace {
 
-inline long perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
+inline long perf_event_open(const struct perf_event_attr *hw_event, pid_t pid,
                             int cpu, int group_fd, unsigned long flags) {
   int ret;
 
