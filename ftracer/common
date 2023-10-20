@@ -84,6 +84,9 @@ do_uprobe_enabled() {
     done
 }
 
+opt_help=
+opt_list=
+
 opt_duration=
 opt_stacktrace=
 
@@ -118,6 +121,12 @@ usage() {
 main() {
     while (( $# )); do
         case "$1" in
+            -h | --help)
+                opt_help=1
+                ;;
+            -l | --list)
+                opt_list=1
+                ;;
             -d | --duration)
                 opt_duration="$2"
                 shift
@@ -136,16 +145,23 @@ main() {
                 opt_filter+=("$2")
                 shift
                 ;;
-            -h | --help)
-                usage
-                exit 0
-                ;;
             *)
                 break
                 ;;
         esac
         shift
     done
+
+    if [[ -n "$opt_help" ]]; then
+        usage
+        exit 0
+    fi
+
+    if [[ -n "$opt_list" ]]; then
+        cat "$tracefs/available_events"
+        exit 0
+    fi
+
     do_main "$@"
 
     if [[ -n "$opt_stacktrace" ]]; then
