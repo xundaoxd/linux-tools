@@ -56,7 +56,7 @@ do_uprobe() {
     local uprobe
     for u in "$@"; do
         read -r -a uprobe <<< "$u"
-        [[ "${uprobe[1]#*:}" != 0x* ]] && uprobe[3]="${uprobe[1]%:*}:$(get_addr "${uprobe[1]%:*}" "${uprobe[1]#*:}")"
+        [[ "${uprobe[1]#*:}" != 0x* ]] && uprobe[1]="${uprobe[1]%:*}:$(get_addr "${uprobe[1]%:*}" "${uprobe[1]#*:}")"
         if (( ${#uprobe[0]} == 1 )); then
             uprobe[0]="${uprobe[0]}:${uprobe[1]#*:}"
         fi
