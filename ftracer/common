@@ -1,53 +1,15 @@
 #!/usr/bin/env bash
 
+self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+.   "$self_dir/utils"
+
 tracefs="/sys/kernel/debug/tracing"
-
-err() {
-    echo "$@"
-    exit 1
-}
-
-do_run() {
-    if ! eval "$@"; then
-        err "WARNING: command failed \"$*\""
-    fi
-}
-
-join() {
-    local IFS="$1"
-    shift
-    echo "$*"
-}
-
-get_addr() {
-    local bin="$1"
-    local sym="$2"
-    local addr
-    addr=$(objdump -tT "${bin}" | awk -v sym="${sym}" '$NF == sym && $4 == ".text" {print $1;exit}')
-    [[ "$addr" == "" ]] && err "missing sym: ${bin}:${sym}"
-    [[ 0x$addr == 0 ]] && err "failed resolve: ${bin}:${sym}"
-    addr=0x$(printf "%x" 0x$addr)
-    echo "$addr"
-}
-
-post_hooks=()
-atexit() {
-    for ((i = ${#post_hooks[@]} - 1; i >= 0; i--)) {
-        do_run "${post_hooks[i]}"
-    }
-}
-trap atexit EXIT
-run_atexit() {
-    post_hooks+=("$*")
-}
 
 # do_event 'kmem:mm_page_alloc'
 do_event() {
     for e in "$@"; do
-        local ename="${e//://}"
-        prev_event_hook "$e"
-        do_run "echo 1 > $tracefs/events/$ename/enable"
-        run_atexit "echo 0 > $tracefs/events/$ename/enable"
+        echo "$e" >> "$tracefs/set_event"
+        run_atexit "echo '!$e' >> $tracefs/set_event"
     done
 }
 
@@ -109,19 +71,6 @@ opt_pid=()
 opt_followfork=
 opt_filter=()
 
-prev_event_hook() {
-    local e="$1"
-    local ename="${e//://}"
-    for f in "${opt_filter[@]}"; do
-        IFS=":" read -r -a filter <<< "$f"
-        if (( ${#filter[@]} == 1 )) || [[ "$f" == ${e}* ]]; then
-            f=${f##*:}
-            echo "$f" > "$tracefs/events/$ename/filter"
-            run_atexit "echo 0 > $tracefs/events/$ename/filter"
-        fi
-    done
-}
-
 init_event_options() {
     if (( ${#opt_pid[@]} )); then
         echo "${opt_pid[*]}" > "$tracefs/set_event_pid"
@@ -130,6 +79,14 @@ init_event_options() {
             echo 1 > "$tracefs/options/event-fork"
             run_atexit "echo 0 > $tracefs/options/event-fork"
         fi
+    fi
+    if (( ${#opt_filter[@]} )); then
+        for f in "${opt_filter[@]}"; do
+            local e=${f%:*}
+            local epath="$tracefs/events/${e//://}"
+            echo "${f##*:}" > "$epath/filter"
+            run_atexit "echo 0 > $epath/filter"
+        done
     fi
 }
 
