@@ -20,8 +20,8 @@ do_main() {
     local probes=()
     for tmp in "${marks[@]}"; do
         IFS=":" read -r -a mark <<< "$tmp"
-        probes+=("p:${mark[0]}_Enter:${mark[1]}:${mark[2]}")
-        probes+=("r:${mark[0]}_Exit:${mark[1]}:${mark[2]}")
+        probes+=("p:${mark[0]}_Enter ${mark[1]}:${mark[2]}")
+        probes+=("r:${mark[0]}_Exit ${mark[1]}:${mark[2]}")
     done
     do_uprobe_enabled "${probes[@]}"
 
