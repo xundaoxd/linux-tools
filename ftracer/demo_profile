@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -e
+
+self_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
+.   "$self_dir/common"
+
+marks=(
+    "demo:/home/xundaoxd/Tmp/demo/demo:_Z6do_runv"
+)
+
+do_main() {
+    opt_filter+=('sched:sched_switch:prev_comm ~ "demo" || next_comm ~ "demo"')
+    do_event "sched:sched_switch"
+
+    local probes=()
+    for tmp in "${marks[@]}"; do
+        IFS=":" read -r -a mark <<< "$tmp"
+        probes+=("p:${mark[0]}_Enter ${mark[1]}:${mark[2]}")
+        probes+=("r:${mark[0]}_Exit ${mark[1]}:${mark[2]}")
+    done
+    do_uprobe_enabled "${probes[@]}"
+
+    init_event_options "${probes[@]}"
+}
+
+main "$@"
+
+
