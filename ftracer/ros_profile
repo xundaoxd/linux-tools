@@ -24,8 +24,6 @@ do_main() {
         probes+=("r:${mark[0]}_Exit ${mark[1]}:${mark[2]}")
     done
     do_uprobe_enabled "${probes[@]}"
-
-    init_event_options "${probes[@]}"
 }
 
 main "$@"

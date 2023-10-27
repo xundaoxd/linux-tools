@@ -163,6 +163,7 @@ main() {
     fi
 
     do_main "$@"
+    init_event_options
 
     if [[ -n "$opt_stacktrace" ]]; then
         echo 1 > $tracefs/options/stacktrace
